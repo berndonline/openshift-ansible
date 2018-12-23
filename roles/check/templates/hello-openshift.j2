@@ -2,6 +2,29 @@ kind: List
 metadata: {}
 apiVersion: v1
 items:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: hello-build
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "hello-openshift:latest"
+    source:
+      dockerfile: |-
+          FROM openshift/hello-openshift
+      type: Dockerfile
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: "hello-openshift-source:latest"
+      type: Docker
+    triggers:
+      - type: ConfigChange
+      - imageChange: {}
+        type: ImageChange
   - apiVersion: v1
     kind: ImageStream
     metadata:
@@ -16,37 +39,50 @@ items:
     kind: ImageStream
     metadata:
       name: hello-openshift
+{% for item in pods %}
+  - apiVersion: v1
+    kind: ConfigMap
+    data:
+      configmap.msg: {{ item.name }}
+    metadata:
+      name: configmap-{{ item.name }}
   - apiVersion: v1
     kind: DeploymentConfig
     metadata:
-      name: hello-app-http
+      name: {{ item.name }}
     spec:
       replicas: 1
       selector:
-        app: hello-app-http
-        deploymentconfig: hello-app-http
+        app: {{ item.name }}
+        deploymentconfig: {{ item.name }}
       strategy: ~
       template:
         metadata:
           labels:
-            app: hello-app-http
-            deploymentconfig: hello-app-http
+            app: {{ item.name }}
+            deploymentconfig: {{ item.name }}
         spec:
           containers:
             - image: " "
-              name: hello-app-http
+              name: {{ item.name }}
               ports:
                 - containerPort: 8080
                   protocol: TCP
                 - containerPort: 8888
                   protocol: TCP
+              env:
+                - name: RESPONSE
+                  valueFrom:
+                    configMapKeyRef:
+                      key: configmap.msg
+                      name: configmap-{{ item.name }}
       test: false
       triggers:
         - type: ConfigChange
         - imageChangeParams:
             automatic: true
             containerNames:
-              - hello-app-http
+              - {{ item.name }}
             from:
               kind: ImageStreamTag
               name: "hello-openshift:latest"
@@ -54,7 +90,7 @@ items:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: hello-app-http
+      name: {{ item.name }}
     spec:
       ports:
         - name: web
@@ -62,12 +98,12 @@ items:
           protocol: TCP
           targetPort: 8080
       selector:
-        app: hello-app-http
-        deploymentconfig: hello-app-http
+        app: {{ item.name }}
+        deploymentconfig: {{ item.name }}
   - apiVersion: v1
     kind: Route
     metadata:
-      name: hello-app-http
+      name: {{ item.name }}
     spec:
       port:
         targetPort: web
@@ -76,27 +112,5 @@ items:
         termination: edge
       to:
         kind: Service
-        name: hello-app-http
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      name: hello-build-http
-    spec:
-      output:
-        to:
-          kind: ImageStreamTag
-          name: "hello-openshift:latest"
-      source:
-        dockerfile: |-
-            FROM openshift/hello-openshift
-        type: Dockerfile
-      strategy:
-        dockerStrategy:
-          from:
-            kind: ImageStreamTag
-            name: "hello-openshift-source:latest"
-        type: Docker
-      triggers:
-        - type: ConfigChange
-        - imageChange: {}
-          type: ImageChange
+        name: {{ item.name }}
+{% endfor %}
