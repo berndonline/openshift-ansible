@@ -17,7 +17,7 @@
 - name: copy hello openshift template
   template:
     src: hello-openshift.j2
-    dest: {{ mktemp.stdout }}/templates/hello-openshift.yml
+    dest: "{{ mktemp.stdout }}/templates/hello-openshift.yml"
     mode: 0777
 
 - name: create test project
