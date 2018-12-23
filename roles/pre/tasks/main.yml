@@ -37,16 +37,6 @@
     - "docker"
     - "NetworkManager"
 
-- name: make sure docker is not started
-  systemd:
-    name: "{{ item }}"
-    state: stopped
-  with_items:
-    - "docker"
-
-- name: clear /var/lib/docker
-  shell: rm -rf /var/lib/docker/*
-
 - name: ensure that services are started
   systemd:
     name: "{{ item }}"
