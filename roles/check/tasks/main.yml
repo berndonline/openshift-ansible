@@ -19,7 +19,7 @@
 
 - name: Not ready nodes
   debug:
-    msg: "{{ notready.stdout_lines }}"
+    var: notready.stdout_lines
 
 - name: Check etcd state
   command: docker exec etcd_container /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
@@ -27,11 +27,11 @@
 
 - name: Show etcd state
   debug:
-    msg: "{{ etcdstate.stdout_lines }}"
+    var: etcdstate.stdout_lines
   when: etcdstate.stdout | length > 0
-  
+
 - name: Check default, openshift-infra and logging project for failed pods
-  command: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' Running || true
+  command: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' Running' || true
   register: failedpods
   with_items:
     - default
@@ -42,7 +42,7 @@
 
 - name: Failed failedpods
   debug:
-    msg: "{{ failedpods.stdout_lines }}"
+    var: failedpods.stdout_lines
 
 - name: Test build
   include_tasks: build.yml
