@@ -50,7 +50,6 @@
 - name: configure docker storage setup
   copy:
     content: |
-      DEVS=/dev/xvdf
       VG=docker-vg
     dest: /etc/sysconfig/docker-storage-setup
     owner: root
