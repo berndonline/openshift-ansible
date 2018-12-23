@@ -2,6 +2,7 @@
 
 - name: add epel release repo
   shell: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+  ignore_errors: true
 
 - name: install packages
   package:
@@ -47,10 +48,15 @@
   shell: rm -rf /var/lib/docker/*
 
 - name: configure docker storage setup
-  shell: cat <<EOF > /etc/sysconfig/docker-storage-setup \
-    DEVS=/dev/xvdf \
-    VG=docker-vg \
-    EOF
+  copy:
+    content: |
+    DEVS=/dev/xvdf
+    VG=docker-vg
+    dest: /etc/sysconfig/docker-storage-setup
+    owner: root
+    group: root
+    mode: 0644
+    force: yes
 
 - name: run docker storage setup
   shell: docker-storage-setup
