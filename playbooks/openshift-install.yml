@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  connection: localhost
+  gather_facts: false
+  tasks:
+  - debug:
+      msg: Install openshift cluster
+
+- name: OpenShift prerequisites
+  import_playbook: ../openshift-ansible/playbooks/prerequisites.yml
+
+- name: OpenShift installation
+  import_playbook: ../openshift-ansible/playbooks/deploy_cluster.yml

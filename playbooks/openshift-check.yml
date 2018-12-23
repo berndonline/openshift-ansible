@@ -1,0 +1,6 @@
+---
+- name: Check OpenShift cluster installation
+  hosts: masters
+  gather_facts: false
+  roles:
+  - role: "check"

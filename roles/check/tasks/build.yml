@@ -1,0 +1,69 @@
+---
+- name: create template folder
+  file: path={{ mktemp.stdout }}/templates state=directory
+
+- name: create sequence number list
+  set_fact:
+    numb_list: "{{ (numb_list | default([])) + [item] }}"
+  with_sequence: "start=1 count=5"
+
+- name: create pod list
+  set_fact:
+    pods: "{{ (pods | default([])) + [pod_template] }}"
+  with_nested:
+    - "{{ numb_list }}"
+    - { svc: "http" }
+
+- name: copy hello openshift template
+  template:
+    src: hello-openshift.j2
+    dest: {{ mktemp.stdout }}/templates/hello-openshift.yml
+    mode: 0777
+
+- name: create test project
+  command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
+
+- name: deploy hello openshift pods
+  command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: deploy
+  failed_when: ('already exists' not in deploy.stderr) and ('created' not in deploy.stdout)
+  changed_when: ('created' in deploy.stdout)
+
+- name: check if all pods are running
+  command: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  register: check
+  until: check.stdout.find("Running") != -1
+  with_items: "{{ pods }}"
+  retries: 10
+  delay: 10
+
+- name: get pod hostnames
+  command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: check_route
+
+- name: convert check_route string to json
+  set_fact: check_route_json="{{ check_route.stdout | from_json }}"
+
+- name: set query to get pod hostname
+  set_fact:
+    hostname_query: "items[*].spec.host"
+
+- name: get hostname list
+  set_fact:
+    pod_hostnames: "{{ check_route_json | json_query(hostname_query) }}"
+
+- name: connect to route via curl
+  command: "curl -v http://{{ item }}/"
+  with_items: "{{ pod_hostnames }}"
+  register: check_http_route
+
+- name: set query to get http response
+  set_fact:
+    route_query: "[*].stdout"
+
+- name: show route http response
+  debug:
+    msg: "{{ check_http_route.results | json_query(route_query) }}"
+
+- name: delete test project
+  command: oc delete project test --config={{ mktemp.stdout }}/admin.kubeconfig

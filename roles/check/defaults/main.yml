@@ -1,0 +1,3 @@
+---
+pod_template:
+  name: "hello-{{ item.1.svc }}-{{ item.0 }}"

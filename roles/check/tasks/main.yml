@@ -1,0 +1,54 @@
+---
+- name: make temp directory
+  command: mktemp -d
+  register: mktemp
+
+- name: create temp directory
+  command: mktemp -d {{ mktemp.stdout }}/openshift-XXXXXXX
+  register: mktemp
+  changed_when: false
+
+- name: copy admin config
+  command: cp /etc/origin/master/admin.kubeconfig {{ mktemp.stdout }}/admin.kubeconfig
+  changed_when: false
+
+- name: check for not ready nodes
+  command: oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep -v ' Ready' || true
+  register: notready
+  ignore_errors: true
+
+- name: Not ready nodes
+  debug:
+    msg: "{{ notready.stdout_lines }}"
+
+- name: Check etcd state
+  command: docker exec etcd_container /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
+  register: etcdstate
+
+- name: Show etcd state
+  debug:
+    msg: "{{ etcdstate.stdout_lines }}"
+  when: etcdstate.stdout | length > 0
+  
+- name: Check default, openshift-infra and logging project for failed pods
+  command: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' Running || true
+  register: failedpods
+  with_items:
+    - default
+    - openshift-infra
+    - logging
+  ignore_errors: true
+  changed_when: false
+
+- name: Failed failedpods
+  debug:
+    msg: "{{ failedpods.stdout_lines }}"
+
+- name: Test build
+  include_tasks: build.yml
+
+- name: delete temp directory
+  file:
+    name: "{{ mktemp.stdout }}"
+    state: absent
+  changed_when: false
