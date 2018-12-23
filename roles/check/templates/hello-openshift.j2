@@ -2,29 +2,29 @@ kind: List
 metadata: {}
 apiVersion: v1
 items:
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    name: hello-build
-  spec:
-    output:
-      to:
-        kind: ImageStreamTag
-        name: "hello-openshift:latest"
-    source:
-      dockerfile: |-
-          FROM openshift/hello-openshift
-      type: Dockerfile
-    strategy:
-      dockerStrategy:
-        from:
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: hello-build
+    spec:
+      output:
+        to:
           kind: ImageStreamTag
-          name: "hello-openshift-source:latest"
-      type: Docker
-    triggers:
-      - type: ConfigChange
-      - imageChange: {}
-        type: ImageChange
+          name: "hello-openshift:latest"
+      source:
+        dockerfile: |-
+            FROM openshift/hello-openshift
+        type: Dockerfile
+      strategy:
+        dockerStrategy:
+          from:
+            kind: ImageStreamTag
+            name: "hello-openshift-source:latest"
+        type: Docker
+      triggers:
+        - type: ConfigChange
+        - imageChange: {}
+          type: ImageChange
   - apiVersion: v1
     kind: ImageStream
     metadata:
