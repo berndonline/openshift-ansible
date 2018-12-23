@@ -46,6 +46,9 @@
     - "docker"
     - "NetworkManager"
 
+- name: patch servers
+  yum: name=* state=latest
+
 - name: reboot servers
   shell: sleep 3 && shutdown -r now
   async: 1
