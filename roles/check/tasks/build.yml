@@ -35,7 +35,7 @@
   until: check.stdout.find("Running") != -1
   with_items: "{{ pods }}"
   retries: 10
-  delay: 10
+  delay: 20
 
 - name: get pod hostnames
   command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
