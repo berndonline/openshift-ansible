@@ -47,19 +47,6 @@
 - name: clear /var/lib/docker
   shell: rm -rf /var/lib/docker/*
 
-- name: configure docker storage setup
-  copy:
-    content: |
-      VG=docker-vg
-    dest: /etc/sysconfig/docker-storage-setup
-    owner: root
-    group: root
-    mode: 0644
-    force: yes
-
-- name: run docker storage setup
-  shell: docker-storage-setup
-
 - name: ensure that services are started
   systemd:
     name: "{{ item }}"
