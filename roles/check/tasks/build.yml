@@ -12,7 +12,7 @@
     pods: "{{ (pods | default([])) + [pod_template] }}"
   with_nested:
     - "{{ numb_list }}"
-    - { svc: "http" }
+    - [ { svc: "http" } ]
 
 - name: copy hello openshift template
   template:
