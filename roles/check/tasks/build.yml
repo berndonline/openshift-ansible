@@ -5,7 +5,7 @@
 - name: create sequence number list
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
-  with_sequence: "start=1 count=5"
+  with_sequence: "start=1 count=10"
 
 - name: create pod list
   set_fact:
@@ -22,6 +22,8 @@
 
 - name: create test project
   command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: new_project
+  failed_when: ('already exists' not in new_project.stderr) and ('created' not in new_project.stdout)
 
 - name: deploy hello openshift pods
   command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
