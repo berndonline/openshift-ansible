@@ -23,7 +23,7 @@
 - name: create test project
   command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
   register: new_project
-  failed_when: ('already exists' not in new_project.stderr) and ('created' not in new_project.stdout)
+  failed_when: ('already exists' not in new_project.stderr) and ('Now using project' not in new_project.stdout)
 
 - name: deploy hello openshift pods
   command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
