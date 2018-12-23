@@ -1,0 +1,85 @@
+---
+
+- name: add epel release repo
+  shell: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: latest
+  register: result
+  retries: 5
+  delay: 2
+  until: result.rc == 0
+  with_items:
+    - "wget"
+    - "git"
+    - "net-tools"
+    - "bind-utils"
+    - "iptables-services"
+    - "bridge-utils"
+    - "bash-completion"
+    - "httpd-tools"
+
+- name: enable rhel server extras
+  shell: yum-config-manager --enable rhui-REGION-rhel-server-extras
+
+- name: install packages
+  package:
+    name: "{{ item }}"
+    state: latest
+  register: result
+  retries: 5
+  delay: 2
+  until: result.rc == 0
+  with_items:
+    - "docker"
+    - "NetworkManager"
+
+- name: make sure docker is not started
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+  with_items:
+    - "docker"
+
+- name: clear /var/lib/docker
+  shell: rm -rf /var/lib/docker/*
+
+- name: configure docker storage setup
+  shell: cat <<EOF > /etc/sysconfig/docker-storage-setup \
+    DEVS=/dev/xvdf \
+    VG=docker-vg \
+    EOF
+
+- name: run docker storage setup
+  shell: docker-storage-setup
+
+- name: ensure that services are started
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - "docker"
+    - "NetworkManager"
+
+- name: patch servers
+  yum: name=* state=latest
+
+- name: reboot servers
+  shell: sleep 3 && shutdown -r now
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: wait for servers to come back
+  become: false
+  wait_for:
+    host: "{{ inventory_hostname }}"
+    state: started
+    port: 22
+    delay: 30
+    timeout: 1000
+    connect_timeout: 15
+  delegate_to: localhost
