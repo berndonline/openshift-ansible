@@ -22,7 +22,7 @@
     var: notready.stdout_lines
 
 - name: Check etcd state
-  command: docker exec etcd_container /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
+  command: /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
   register: etcdstate
 
 - name: Show etcd state
