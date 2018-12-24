@@ -67,5 +67,28 @@
   debug:
     msg: "{{ check_http_route.results | json_query(route_query) }}"
 
+- name: trigger new build
+  command: oc start-build hello-build -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: build
+  failed_when: ('started' not in build.stdout)
+  changed_when: ('started' in build.stdout)
+
+- name: check if all pods are running
+  shell: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  register: check
+  until: check.stdout.find("Running") != -1
+  with_items: "{{ pods }}"
+  retries: 10
+  delay: 20
+
+- name: connect to route via curl
+  command: "curl -v http://{{ item }}/"
+  with_items: "{{ pod_hostnames }}"
+  register: check_http_route
+
+- name: show route http response
+  debug:
+    msg: "{{ check_http_route.results | json_query(route_query) }}"
+
 - name: delete test project
   command: oc delete project test --config={{ mktemp.stdout }}/admin.kubeconfig

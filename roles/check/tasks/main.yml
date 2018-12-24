@@ -21,16 +21,16 @@
   debug:
     var: notready.stdout_lines
 
-- name: Check etcd state
+- name: check etcd state
   shell: /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
   register: etcdstate
 
-- name: Show etcd state
+- name: show etcd state
   debug:
     var: etcdstate.stdout_lines
   when: etcdstate.stdout | length > 0
 
-- name: Check default openshift-infra and logging project for failed pods
+- name: check default openshift-infra and logging projects for failed pods
   shell: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' Running' || true
   register: failedpods
   with_items:
@@ -40,11 +40,24 @@
   ignore_errors: true
   changed_when: false
 
-- name: Failed failedpods
+- name: failed failedpods
   debug:
     var: failedpods.stdout_lines
 
-- name: Test build
+- name: check internal SysDNS resolution for cluster.local
+  command: "nslookup {{ item }}"
+  with_items:
+    - "docker-registry.default.svc.cluster.local"
+    - "docker-registry.default.svc"
+
+- name: check external DNS upstream resolution
+  command: "nslookup {{ item }}"
+  with_items:
+    - "www.google.com"
+    - "www.google.co.uk"
+    - "www.google.de"
+
+- name: run test build
   include_tasks: build.yml
 
 - name: delete temp directory
