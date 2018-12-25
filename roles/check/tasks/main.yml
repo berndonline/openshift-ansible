@@ -38,7 +38,7 @@
   when: etcdstate.stdout | length > 0
 
 - name: check default openshift-infra and logging projects for failed pods
-  shell: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' Running' || true
+  shell: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' NotRunning' || true
   register: failedpods
   with_items:
     - default
