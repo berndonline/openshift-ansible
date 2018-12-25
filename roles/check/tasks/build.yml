@@ -59,13 +59,9 @@
   with_items: "{{ pod_hostnames }}"
   register: check_http_route
 
-- name: set query to get http response
-  set_fact:
-    route_query: "[*].stdout"
-
 - name: show route http response
   debug:
-    msg: "{{ check_http_route.results | json_query(route_query) }}"
+    msg: "{{ check_http_route.results | json_query(query) }}"
 
 - name: trigger new build
   command: oc start-build hello-build -n test --config={{ mktemp.stdout }}/admin.kubeconfig
@@ -94,7 +90,7 @@
 
 - name: show route http response
   debug:
-    msg: "{{ check_http_route.results | json_query(route_query) }}"
+    msg: "{{ check_http_route.results | json_query(query) }}"
 
 - name: delete test project
   command: oc delete project test --config={{ mktemp.stdout }}/admin.kubeconfig
