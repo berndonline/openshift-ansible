@@ -12,10 +12,6 @@
   command: cp /etc/origin/master/admin.kubeconfig {{ mktemp.stdout }}/admin.kubeconfig
   changed_when: false
 
-- name: set json query
-  set_fact:
-    query: "[*].stdout"
-
 - name: check for not ready nodes
   shell: "oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep -v ' Ready' || true"
   register: notready
@@ -59,7 +55,7 @@
 
 - name: failed failedpods
   debug:
-    var: failed_pods_json.results | json_query([*].stdout_lines)
+    msg: "{{ failed_pods.results |map(attribute='stdout_lines')|list }}"
 
 - name: check internal SysDNS resolution for cluster.local
   command: "nslookup {{ item }}"
