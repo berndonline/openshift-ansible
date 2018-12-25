@@ -15,11 +15,18 @@
 - name: check for not ready nodes
   shell: oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep -v ' Ready' || true
   register: notready
-  ignore_errors: true
 
-- name: Not ready nodes
+- name: not ready nodes
   debug:
     var: notready.stdout_lines
+
+- name: check for scheduling disabled nodes
+  shell: oc get nodes --no-headers=true | grep 'SchedulingDisabled' | awk '{ print $1 }'
+  register: schedulingdisabled
+
+- name: scheduling disabled nodes
+  debug:
+    var: schedulingdisabled.stdout_lines
 
 - name: check etcd state
   shell: /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ inventory_hostname }}:2379 cluster-health
@@ -35,9 +42,15 @@
   register: failedpods
   with_items:
     - default
-    - openshift-infra
+    - kube-system
+    - kube-service-catalog
     - logging
-  ignore_errors: true
+    - openshift-infra
+    - openshift-console
+    - openshift-web-console
+    - openshift-monitoring
+    - openshift-node
+    - openshift-sdn
   changed_when: false
 
 - name: failed failedpods
