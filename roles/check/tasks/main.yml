@@ -57,7 +57,8 @@
     - openshift-sdn
   changed_when: false
 
-- set_fact: failed_pods_json="{{ failed_pods.stdout | from_json }}"
+- set_fact:
+    failed_pods_json: failed_pods.stdout | from_json
 
 - name: failed failedpods
   debug:
