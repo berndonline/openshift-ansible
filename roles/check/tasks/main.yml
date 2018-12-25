@@ -13,7 +13,7 @@
   changed_when: false
 
 - name: check for not ready nodes
-  shell: oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep -v ' Ready' || true
+  shell: "oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep -v ' Ready' || true"
   register: notready
 
 - name: not ready nodes
@@ -21,7 +21,7 @@
     var: notready.stdout_lines
 
 - name: check for scheduling disabled nodes
-  shell: oc get nodes --no-headers=true | grep 'SchedulingDisabled' | awk '{ print $1 }'
+  shell: "oc get nodes --no-headers=true | grep 'SchedulingDisabled' | awk '{ print $1 }'"
   register: schedulingdisabled
 
 - name: scheduling disabled nodes
@@ -38,13 +38,13 @@
   when: etcdstate.stdout | length > 0
 
 - name: check default openshift-infra and logging projects for failed pods
-  shell: oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' NotRunning' || true
+  shell: "oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' NotRunning' || true"
   register: failedpods
   with_items:
     - default
     - kube-system
     - kube-service-catalog
-    - logging
+    - openshift-logging
     - openshift-infra
     - openshift-console
     - openshift-web-console
