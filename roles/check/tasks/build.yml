@@ -5,7 +5,7 @@
 - name: create sequence number list
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
-  with_sequence: "start=1 count=10"
+  with_sequence: "start=0 count=9"
 
 - name: create pod list
   set_fact:
