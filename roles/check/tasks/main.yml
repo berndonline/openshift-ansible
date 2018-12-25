@@ -39,7 +39,7 @@
 
 - name: check default openshift-infra and logging projects for failed pods
   shell: "oc get pods -o wide --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig -n {{ item }} | grep -v ' NotRunning' || true"
-  register: failedpods
+  register: failed_pods
   with_items:
     - default
     - kube-system
@@ -55,7 +55,7 @@
 
 - name: failed failedpods
   debug:
-    var: failedpods.stdout_lines
+    var: failed_pods.stdout_lines
 
 - name: check internal SysDNS resolution for cluster.local
   command: "nslookup {{ item }}"
