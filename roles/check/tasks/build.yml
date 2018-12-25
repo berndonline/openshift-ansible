@@ -73,8 +73,14 @@
   failed_when: ('started' not in build.stdout)
   changed_when: ('started' in build.stdout)
 
-- name: check if all pods are running
-  shell: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+- name: check new build is created
+  shell: oc get build --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $1 }' | tail -n1
+  register: build_check
+  failed_when: ('hello-build-2' not in deploy.stdout)
+  changed_when: ('hello-build-2' in deploy.stdout)
+
+- name: check if all pods with new build are running
+  shell: oc get pods -l deployment={{ item.name }}-2 -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
   register: check
   until: check.stdout.find("Running") != -1
   with_items: "{{ pods }}"
