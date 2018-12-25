@@ -57,12 +57,9 @@
     - openshift-sdn
   changed_when: false
 
-- set_fact:
-    failed_pods_json: failed_pods.stdout | from_json
-
 - name: failed failedpods
   debug:
-    var: failed_pods_json.results | json_query(query)
+    var: failed_pods_json.results | json_query([*].stdout_lines)
 
 - name: check internal SysDNS resolution for cluster.local
   command: "nslookup {{ item }}"
