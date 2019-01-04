@@ -26,6 +26,7 @@
     - "wget"
     - "git"
     - "net-tools"
+    - "yum-utils"
     - "bind-utils"
     - "iptables-services"
     - "bridge-utils"
@@ -34,6 +35,13 @@
 
 - name: enable rhel server extras
   shell: yum-config-manager --enable rhui-REGION-rhel-server-extras
+
+- name: ensure firewalld is stopped
+  service:
+    name: firewalld
+    state: stopped
+    enabled: false
+  ignore_errors: true
 
 - name: install packages
   package:
