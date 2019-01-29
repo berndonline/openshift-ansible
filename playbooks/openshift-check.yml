@@ -3,4 +3,4 @@
   hosts: masters
   gather_facts: false
   roles:
-  - { role: "check", when: inventory_hostname == group['masters'] }
+  - { role: "check", when: masters in group_names }
