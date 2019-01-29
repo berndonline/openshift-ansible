@@ -8,6 +8,10 @@
   register: mktemp
   changed_when: false
 
+- name: get hostname
+  command: hostname
+  register: hostname
+
 - name: copy admin config
   command: cp /etc/origin/master/admin.kubeconfig {{ mktemp.stdout }}/admin.kubeconfig
   changed_when: false
@@ -29,7 +33,7 @@
     var: schedulingdisabled.stdout_lines
 
 - name: check etcd state
-  shell: /usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://localhost:2379 cluster-health
+  shell: "/usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ hostname.stdout }}:2379 cluster-health"
   register: etcdstate
 
 - name: show etcd state
