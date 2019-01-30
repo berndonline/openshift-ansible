@@ -25,7 +25,7 @@
     var: notready.stdout_lines
 
 - name: check for scheduling disabled nodes
-  shell: "oc get nodes --no-headers=true | grep 'SchedulingDisabled' | awk '{ print $1 }'"
+  shell: "oc get nodes --no-headers=true --config={{ mktemp.stdout }}/admin.kubeconfig | grep 'SchedulingDisabled' | awk '{ print $1 }'"
   register: schedulingdisabled
 
 - name: scheduling disabled nodes
@@ -75,7 +75,7 @@
     msg: "{{ failed_pods.results |map(attribute='stdout_lines')|list }}"
 
 - name: get container registry ip
-  shell: "oc get svc docker-registry -n default -o 'jsonpath={.spec.clusterIP}:{.spec.ports[0].port}'"
+  shell: "oc get svc docker-registry --config={{ mktemp.stdout }}/admin.kubeconfig -n default -o 'jsonpath={.spec.clusterIP}:{.spec.ports[0].port}'"
   register: registry_ip
 
 - name: check container registry health
