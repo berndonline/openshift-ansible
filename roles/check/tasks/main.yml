@@ -32,13 +32,18 @@
   debug:
     var: schedulingdisabled.stdout_lines
 
-- name: validate node certificates
-  shell: "cat /etc/origin/node/server.crt | openssl x509 -text | grep -i Validity -A2"
-  register: node_cert
+- name: validate master certificates
+  shell: "{{ item }}"
+  register: master_certs
+  with_items:
+    - "cat /etc/origin/master/ca.crt | openssl x509 -text | grep -i Validity -A2"
+    - "cat /etc/origin/master/master.server.crt | openssl x509 -text | grep -i Validity -A2"
+    - "cat /etc/origin/master/admin.crt | openssl x509 -text | grep -i Validity -A2"
+    - "cat /etc/etcd/ca.crt | openssl x509 -text | grep -i Validity -A2"
 
-- name: node certificates
+- name: ca certificate
   debug:
-    var: node_cert.stdout_lines
+    msg: "{{ master_certs.results | map(attribute='stdout_lines')| list }}"
 
 - name: check etcd state
   shell: "/usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ hostname.stdout }}:2379 cluster-health"
@@ -68,6 +73,19 @@
 - name: failed failedpods
   debug:
     msg: "{{ failed_pods.results |map(attribute='stdout_lines')|list }}"
+
+- name: get container registry ip
+  shell: "oc get svc docker-registry -n default -o 'jsonpath={.spec.clusterIP}:{.spec.ports[0].port}'"
+  register: registry_ip
+
+- name: check container registry health
+  uri:
+    url: "https://{{ registry_ip }}/healthz"
+    method: GET
+    return_content: yes
+    validate_certs: false
+    status_code: 200
+    timeout: 180
 
 - name: check internal SysDNS resolution for cluster.local
   command: "nslookup {{ item }}"
