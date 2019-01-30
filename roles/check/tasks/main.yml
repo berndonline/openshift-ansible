@@ -32,6 +32,14 @@
   debug:
     var: schedulingdisabled.stdout_lines
 
+- name: validate node certificates
+  shell: "cat /etc/origin/node/server.crt | openssl x509 -text | grep -i Validity -A2"
+  register: node_cert
+
+- name: node certificates
+  debug:
+    var: node_cert.stdout_lines
+
 - name: check etcd state
   shell: "/usr/bin/etcdctl --cert-file /etc/etcd/peer.crt --key-file /etc/etcd/peer.key --ca-file /etc/etcd/ca.crt -C https://{{ hostname.stdout }}:2379 cluster-health"
   register: etcdstate
