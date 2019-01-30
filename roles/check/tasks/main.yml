@@ -80,7 +80,7 @@
 
 - name: check container registry health
   uri:
-    url: "https://{{ registry_ip }}/healthz"
+    url: "https://{{ registry_ip.stdout }}/healthz"
     method: GET
     return_content: yes
     validate_certs: false
