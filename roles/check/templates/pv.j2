@@ -1,0 +1,20 @@
+kind: List
+metadata: {}
+apiVersion: v1
+items:
+{% for item in pv_list %}
+  - apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: pv0{{ item }}
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      - ReadWriteMany
+      - ReadOnlyMany
+      capacity:
+        storage: 1Gi
+      hostPath:
+        path: /var/lib/ocp_storage/pv/pv0{{ item }}
+      persistentVolumeReclaimPolicy: Recycle
+{% endfor %}

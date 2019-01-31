@@ -2,10 +2,15 @@
 - name: create template folder
   file: path={{ mktemp.stdout }}/templates state=directory
 
-- name: create sequence number list
+- name: create sequence number list for hello openshift
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
   with_sequence: "start=0 count=10"
+
+- name: create sequence number list for pv
+  set_fact:
+    pv_list: "{{ (pv_list | default([])) + [item] }}"
+  with_sequence: "start=1 count=5"
 
 - name: create pod list
   set_fact:
@@ -13,27 +18,6 @@
   with_nested:
     - "{{ numb_list }}"
     - [ { svc: "http" } ]
-
-- name: create pvs
-  shell: |
-    oc create --config={{ mktemp.stdout }}/admin.kubeconfig -f - <<PV
-    apiVersion: v1
-    kind: PersistentVolume
-    metadata:
-      name: pv01
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      - ReadWriteMany
-      - ReadOnlyMany
-      capacity:
-        storage: 1Gi
-      hostPath:
-        path: /var/lib/ocp_storage/pv/pv01
-      persistentVolumeReclaimPolicy: Recycle
-    PV
-  args:
-    executable: /bin/bash
 
 - name: copy build templates
   template:
@@ -43,6 +27,13 @@
   with_items:
     - { src: 'busybox.j2', dest: 'busybox.yml' }
     - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
+    - { src: 'pv.j2', dest: 'pv.yml' }
+
+- name: create pvs
+  command: oc create -f {{ mktemp.stdout }}/templates/pv.yml --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: deploy_pv
+  failed_when: ('already exists' not in deploy_pv.stderr) and ('created' not in deploy_pv.stdout)
+  changed_when: ('created' in deploy_pv.stdout)
 
 - name: create test project
   command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
