@@ -32,7 +32,7 @@
 - name: copy test test file
   copy:
     src: "{{role_path}}/files/testfile"
-    dest: "{{ mktemp.stdout }}/files/testfile"
+    dest: "{{ mktemp.stdout }}/testfile"
 
 - name: create pvs
   command: oc create -f {{ mktemp.stdout }}/templates/pv.yml --config={{ mktemp.stdout }}/admin.kubeconfig
