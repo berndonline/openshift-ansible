@@ -65,7 +65,8 @@
     - "NetworkManager"
 
 - name: create folders for pvs
-  shell:
+  shell: {{ item }}
+  with_items:
     - "mkdir -p /var/lib/ocp_storage/pv/pv0{1..5}"
     - "chmod -R 777 /var/lib/ocp_storage/pv/pv*"
     - "chmod -R a+w /var/lib/ocp_storage/pv/pv*"
