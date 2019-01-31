@@ -74,7 +74,7 @@
   register: busybox_pod
 
 - name: sync testfile to pod
-  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}:/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
   register: stat
   failed_when: ( 'testfile' not in stat.stdout )
 
