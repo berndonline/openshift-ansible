@@ -3,7 +3,6 @@
   set_fact:
     pv_list: "{{ (pv_list | default([])) + [item] }}"
   with_sequence: "start=1 count=5"
-  no_log: true
 
 - name: copy build templates
   template:

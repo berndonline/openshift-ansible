@@ -3,12 +3,10 @@
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
   with_sequence: "start=0 count=10"
-  no_log: true
 
 - name: create pod list
   set_fact:
     pods: "{{ (pods | default([])) + [pod_template] }}"
-  no_log: true
   with_nested:
     - "{{ numb_list }}"
     - [ { svc: "http" } ]
