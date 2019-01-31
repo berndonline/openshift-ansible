@@ -2,6 +2,9 @@
 - name: create template folder
   file: path={{ mktemp.stdout }}/templates state=directory
 
+- name: create test file folder
+  file: path={{ mktemp.stdout }}/test state=directory
+
 - name: create sequence number list for hello openshift
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
@@ -32,7 +35,7 @@
 - name: copy test test file
   copy:
     src: "{{role_path}}/files/testfile"
-    dest: "{{ mktemp.stdout }}/testfile"
+    dest: "{{ mktemp.stdout }}/test/testfile"
 
 - name: create pvs
   command: oc create -f {{ mktemp.stdout }}/templates/pv.yml --config={{ mktemp.stdout }}/admin.kubeconfig
@@ -71,7 +74,7 @@
   register: busybox_pod
 
 - name: sync testfile to pod
-  shell: oc rsync {{ mktemp.stdout }}/testfile {{ busybox_pod.stdout }}/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
   register: stat
   failed_when: ( 'testfile' not in stat.stdout )
 
