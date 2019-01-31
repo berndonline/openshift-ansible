@@ -79,12 +79,12 @@
   failed_when: ( 'testfile' not in stat.stdout )
 
 - name: check testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/testfile
+  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/test/testfile
   register: filestat
   failed_when: ( 'Testfile' not in filestat.stdout )
 
 - name: check testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- rm /mypv/testfile
+  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- rm -rf /mypv/test/
 
 - name: get hello openshift pod hostnames
   command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
