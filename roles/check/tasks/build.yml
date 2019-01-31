@@ -70,6 +70,19 @@
   shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
   register: busybox_pod
 
+- name: sync testfile to pod
+  shell: oc rsync {{ mktemp.stdout }}/testfile {{ busybox_pod.stdout }}/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: stat
+  failed_when: ( 'testfile' not in stat.stdout )
+
+- name: check testfile in pv
+  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/testfile
+  register: filestat
+  failed_when: ( 'Testfile' not in filestat.stdout )
+
+- name: check testfile in pv
+  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- rm /mypv/testfile
+
 - name: get hello openshift pod hostnames
   command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
   register: check_route
