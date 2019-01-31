@@ -14,11 +14,37 @@
     - "{{ numb_list }}"
     - [ { svc: "http" } ]
 
-- name: copy hello openshift template
+- name: create pvs
+  shell: |
+    for i in $(seq 1 5); do
+      oc create --config={{ mktemp.stdout }}/admin.kubeconfig -f - <<PV
+      apiVersion: v1
+      kind: PersistentVolume
+      metadata:
+        name: pv0$i
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        - ReadWriteMany
+        - ReadOnlyMany
+        capacity:
+          storage: 1Gi
+        hostPath:
+          path: /var/lib/ocp_storage/pv/pv0$i
+        persistentVolumeReclaimPolicy: Recycle
+      PV
+    done
+  args:
+    executable: /bin/bash
+
+- name: copy build templates
   template:
-    src: hello-openshift.j2
-    dest: "{{ mktemp.stdout }}/templates/hello-openshift.yml"
+    src: "{{ item.src }}"
+    dest: "{{ mktemp.stdout }}/templates/{{ item.dest }}"
     mode: 0777
+  with_items:
+    - { src: 'busybox.j2', dest: 'busybox.yml' }
+    - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
 
 - name: create test project
   command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
@@ -27,19 +53,31 @@
 
 - name: deploy hello openshift pods
   command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: deploy
-  failed_when: ('already exists' not in deploy.stderr) and ('created' not in deploy.stdout)
-  changed_when: ('created' in deploy.stdout)
+  register: deploy_hello
+  failed_when: ('already exists' not in deploy_hello.stderr) and ('created' not in deploy_hello.stdout)
+  changed_when: ('created' in deploy_hello.stdout)
+
+- name: deploy busybox pod
+  command: oc create -f {{ mktemp.stdout }}/templates/busybox.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  register: deploy_busy
+  failed_when: ('already exists' not in deploy_busy.stderr) and ('created' not in deploy_busy.stdout)
+  changed_when: ('created' in deploy_busy.stdout)
 
 - name: check if all pods are running
   shell: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
   register: check
   until: check.stdout.find("Running") != -1
-  with_items: "{{ pods }}"
+  with_items:
+    - "{{ pods }}"
+    - busybox
   retries: 10
   delay: 20
 
-- name: get pod hostnames
+- name: get busybox pod name
+  shell: c get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
+  register: busybox_pod
+
+- name: get hello openshift pod hostnames
   command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
   register: check_route
 
