@@ -29,6 +29,11 @@
     - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
     - { src: 'pv.j2', dest: 'pv.yml' }
 
+- name: copy test test file
+  copy:
+    src: "{{role_path}}/files/testfile"
+    dest: "{{ mktemp.stdout }}/files/testfile"
+
 - name: create pvs
   command: oc create -f {{ mktemp.stdout }}/templates/pv.yml --config={{ mktemp.stdout }}/admin.kubeconfig
   register: deploy_pv
@@ -58,12 +63,11 @@
   until: check.stdout.find("Running") != -1
   with_items:
     - "{{ pods }}"
-    - busybox
   retries: 10
   delay: 20
 
 - name: get busybox pod name
-  shell: c get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
+  shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
   register: busybox_pod
 
 - name: get hello openshift pod hostnames
