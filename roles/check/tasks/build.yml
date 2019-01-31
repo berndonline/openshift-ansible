@@ -32,7 +32,6 @@
         path: /var/lib/ocp_storage/pv/pv01
       persistentVolumeReclaimPolicy: Recycle
     PV
-    done
   args:
     executable: /bin/bash
 
