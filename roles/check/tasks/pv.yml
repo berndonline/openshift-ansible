@@ -30,6 +30,10 @@
   failed_when: ('already exists' not in deploy_busy.stderr) and ('created' not in deploy_busy.stdout)
   changed_when: ('created' in deploy_busy.stdout)
 
+- name: sleep for 5 seconds and continue
+  wait_for: timeout=5
+  delegate_to: localhost
+
 - name: get busybox pod name
   shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
   register: busybox_pod
