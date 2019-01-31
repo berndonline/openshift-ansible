@@ -17,7 +17,6 @@
     dest: "{{ mktemp.stdout }}/templates/{{ item.dest }}"
     mode: 0777
   with_items:
-    - { src: 'busybox.j2', dest: 'busybox.yml' }
     - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
 
 - name: deploy hello openshift pods

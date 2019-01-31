@@ -10,6 +10,7 @@
     dest: "{{ mktemp.stdout }}/templates/{{ item.dest }}"
     mode: 0777
   with_items:
+    - { src: 'busybox.j2', dest: 'busybox.yml' }
     - { src: 'pv.j2', dest: 'pv.yml' }
 
 - name: copy testfile
