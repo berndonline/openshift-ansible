@@ -64,6 +64,12 @@
     - "docker"
     - "NetworkManager"
 
+- name: create folders for pvs
+  shell:
+    - "mkdir -p /var/lib/ocp_storage/pv/pv0{1..5}"
+    - "chmod -R 777 /var/lib/ocp_storage/pv/pv*"
+    - "chmod -R a+w /var/lib/ocp_storage/pv/pv*"
+
 - name: patch servers
   yum: name=* state=latest
 
