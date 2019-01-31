@@ -65,11 +65,13 @@
     - "NetworkManager"
 
 - name: create folders for pvs
-  shell: {{ item }}
+  shell: "{{ item }}"
   with_items:
     - "mkdir -p /var/lib/ocp_storage/pv/pv0{1..5}"
     - "chmod -R 777 /var/lib/ocp_storage/pv/pv*"
     - "chmod -R a+w /var/lib/ocp_storage/pv/pv*"
+    - "chcon -R -t svirt_sandbox_file_t /var/lib/ocp_storage/pv/*"
+    - "restorecon -R /var/lib/ocp_storage/pv/"
 
 - name: patch servers
   yum: name=* state=latest
