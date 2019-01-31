@@ -1,19 +1,8 @@
 ---
-- name: create template folder
-  file: path={{ mktemp.stdout }}/templates state=directory
-
-- name: create test file folder
-  file: path={{ mktemp.stdout }}/test state=directory
-
 - name: create sequence number list for hello openshift
   set_fact:
     numb_list: "{{ (numb_list | default([])) + [item] }}"
   with_sequence: "start=0 count=10"
-
-- name: create sequence number list for pv
-  set_fact:
-    pv_list: "{{ (pv_list | default([])) + [item] }}"
-  with_sequence: "start=1 count=5"
 
 - name: create pod list
   set_fact:
@@ -30,35 +19,12 @@
   with_items:
     - { src: 'busybox.j2', dest: 'busybox.yml' }
     - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
-    - { src: 'pv.j2', dest: 'pv.yml' }
-
-- name: copy test test file
-  copy:
-    src: "{{role_path}}/files/testfile"
-    dest: "{{ mktemp.stdout }}/test/testfile"
-
-- name: create pvs
-  command: oc create -f {{ mktemp.stdout }}/templates/pv.yml --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: deploy_pv
-  failed_when: ('already exists' not in deploy_pv.stderr) and ('created' not in deploy_pv.stdout)
-  changed_when: ('created' in deploy_pv.stdout)
-
-- name: create test project
-  command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: new_project
-  failed_when: ('already exists' not in new_project.stderr) and ('Now using project' not in new_project.stdout)
 
 - name: deploy hello openshift pods
   command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
   register: deploy_hello
   failed_when: ('already exists' not in deploy_hello.stderr) and ('created' not in deploy_hello.stdout)
   changed_when: ('created' in deploy_hello.stdout)
-
-- name: deploy busybox pod
-  command: oc create -f {{ mktemp.stdout }}/templates/busybox.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: deploy_busy
-  failed_when: ('already exists' not in deploy_busy.stderr) and ('created' not in deploy_busy.stdout)
-  changed_when: ('created' in deploy_busy.stdout)
 
 - name: check if all pods are running
   shell: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
@@ -68,23 +34,6 @@
     - "{{ pods }}"
   retries: 10
   delay: 20
-
-- name: get busybox pod name
-  shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
-  register: busybox_pod
-
-- name: sync testfile to pod
-  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}:/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: stat
-  failed_when: ( 'testfile' not in stat.stdout )
-
-- name: check testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/test/testfile
-  register: filestat
-  failed_when: ( 'Testfile' not in filestat.stdout )
-
-- name: check testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- rm -rf /mypv/test/
 
 - name: get hello openshift pod hostnames
   command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
@@ -147,9 +96,3 @@
 - name: show route http response
   debug:
     msg: "{{ check_http_route.results | json_query(route_query) }}"
-
-- name: delete test project
-  command: oc delete project test --config={{ mktemp.stdout }}/admin.kubeconfig
-  register: delete_project
-  failed_when: ('deleted' not in delete_project.stdout)
-  changed_when: ('deleted' in delete_project.stdout)
