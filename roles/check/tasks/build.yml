@@ -121,7 +121,7 @@
   changed_when: ('started' in build.stdout)
 
 - name: check new build is created
-  shell: oc get build --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $1 }' | tail -n1
+  shell: oc get build --config={{ mktemp.stdout }}/admin.kubeconfig -n test | tail -n1 | awk '{ print $1 }' | tail -n1
   register: build_check
   failed_when: ('hello-build-2' not in build_check.stdout)
   changed_when: ('hello-build-2' in build_check.stdout)
