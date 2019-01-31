@@ -33,6 +33,7 @@
 - name: sleep for 5 seconds and continue
   wait_for: timeout=5
   delegate_to: localhost
+  become: false
 
 - name: get busybox pod name
   shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
