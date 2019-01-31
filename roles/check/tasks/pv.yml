@@ -30,10 +30,14 @@
   failed_when: ('already exists' not in deploy_busy.stderr) and ('created' not in deploy_busy.stdout)
   changed_when: ('created' in deploy_busy.stdout)
 
-- name: sleep for 15 seconds and continue
-  wait_for: timeout=15
-  delegate_to: localhost
-  become: false
+- name: check if all pods are running
+  shell: oc get pods -l app={{ item }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  register: check
+  until: check.stdout.find("Running") != -1
+  with_items:
+    - "busybox"
+  retries: 10
+  delay: 20
 
 - name: get busybox pod name
   shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
