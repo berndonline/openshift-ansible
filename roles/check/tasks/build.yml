@@ -16,12 +16,11 @@
 
 - name: create pvs
   shell: |
-    for i in $(seq 1 5); do
     oc create --config={{ mktemp.stdout }}/admin.kubeconfig -f - <<PV
     apiVersion: v1
     kind: PersistentVolume
     metadata:
-      name: pv0$i
+      name: pv01
     spec:
       accessModes:
       - ReadWriteOnce
@@ -30,7 +29,7 @@
       capacity:
         storage: 1Gi
       hostPath:
-        path: /var/lib/ocp_storage/pv/pv0$i
+        path: /var/lib/ocp_storage/pv/pv01
       persistentVolumeReclaimPolicy: Recycle
     PV
     done
