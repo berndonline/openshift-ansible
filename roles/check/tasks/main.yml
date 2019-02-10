@@ -107,7 +107,7 @@
     - "www.google.de"
 
 - name: create test project
-  command: oc new-project test --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc new-project validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: new_project
   failed_when: ('already exists' not in new_project.stderr) and ('Now using project' not in new_project.stdout)
 
@@ -118,7 +118,7 @@
   include_tasks: build.yml
 
 - name: delete test project
-  command: oc delete project test --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc delete project validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: delete_project
   failed_when: ('deleted' not in delete_project.stdout)
   changed_when: ('deleted' in delete_project.stdout)

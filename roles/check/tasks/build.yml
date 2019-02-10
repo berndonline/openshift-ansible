@@ -20,13 +20,13 @@
     - { src: 'hello-openshift.j2', dest: 'hello-openshift.yml' }
 
 - name: deploy hello openshift pods
-  command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc create -f {{ mktemp.stdout }}/templates/hello-openshift.yml -n validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: deploy_hello
   failed_when: ('already exists' not in deploy_hello.stderr) and ('created' not in deploy_hello.stdout)
   changed_when: ('created' in deploy_hello.stdout)
 
 - name: check if all pods are running
-  shell: oc get pods -l app={{ item.name }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  shell: oc get pods -l app={{ item.name }} -n validate --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
   register: check
   until: check.stdout.find("Running") != -1
   with_items:
@@ -35,7 +35,7 @@
   delay: 20
 
 - name: get hello openshift pod hostnames
-  command: oc get route -n test -o json --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc get route -n validate -o json --config={{ mktemp.stdout }}/admin.kubeconfig
   register: check_route
 
 - name: convert check_route string to json
@@ -63,19 +63,19 @@
     msg: "{{ check_http_route.results | json_query(route_query) }}"
 
 - name: trigger new build
-  command: oc start-build hello-build -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc start-build hello-build -n validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: build
   failed_when: ('started' not in build.stdout)
   changed_when: ('started' in build.stdout)
 
 - name: check new build is created
-  shell: oc get build --config={{ mktemp.stdout }}/admin.kubeconfig -n test | tail -n1 | awk '{ print $1 }' | tail -n1
+  shell: oc get build --config={{ mktemp.stdout }}/admin.kubeconfig -n validate | tail -n1 | awk '{ print $1 }' | tail -n1
   register: build_check
   failed_when: ('hello-build-2' not in build_check.stdout)
   changed_when: ('hello-build-2' in build_check.stdout)
 
 - name: check if all pods with new build are running
-  shell: oc get pods -l deployment={{ item.name }}-2 -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  shell: oc get pods -l deployment={{ item.name }}-2 -n validate --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
   register: check
   until: check.stdout.find("Running") != -1
   with_items: "{{ pods }}"

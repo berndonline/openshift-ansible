@@ -25,13 +25,13 @@
   changed_when: ('created' in deploy_pv.stdout)
 
 - name: deploy busybox pod
-  command: oc create -f {{ mktemp.stdout }}/templates/busybox.yml -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  command: oc create -f {{ mktemp.stdout }}/templates/busybox.yml -n validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: deploy_busy
   failed_when: ('already exists' not in deploy_busy.stderr) and ('created' not in deploy_busy.stdout)
   changed_when: ('created' in deploy_busy.stdout)
 
 - name: check if all pods are running
-  shell: oc get pods -l app={{ item }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
+  shell: oc get pods -l app={{ item }} -n validate --config={{ mktemp.stdout }}/admin.kubeconfig | tail -n1 | awk '{ print $3 }' | tail -n1
   register: check
   until: check.stdout.find("Running") != -1
   with_items:
@@ -40,18 +40,18 @@
   delay: 20
 
 - name: get busybox pod name
-  shell: oc get pods -l app=busybox -n test --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
+  shell: oc get pods -l app=busybox -n validate --config={{ mktemp.stdout }}/admin.kubeconfig | awk '{ print $1 }' | tail -n1
   register: busybox_pod
 
 - name: sync testfile to pod
-  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}:/mypv -n test --config={{ mktemp.stdout }}/admin.kubeconfig
+  shell: oc rsync {{ mktemp.stdout }}/test {{ busybox_pod.stdout }}:/mypv -n validate --config={{ mktemp.stdout }}/admin.kubeconfig
   register: stat
   failed_when: ( 'testfile' not in stat.stdout )
 
 - name: check testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/test/testfile
+  shell: oc exec {{ busybox_pod.stdout }} -n validate --config={{ mktemp.stdout }}/admin.kubeconfig -- cat /mypv/test/testfile
   register: filestat
   failed_when: ( 'Testfile' not in filestat.stdout )
 
 - name: delete testfile in pv
-  shell: oc exec {{ busybox_pod.stdout }} -n test --config={{ mktemp.stdout }}/admin.kubeconfig -- rm -rf /mypv/test/
+  shell: oc exec {{ busybox_pod.stdout }} -n validate --config={{ mktemp.stdout }}/admin.kubeconfig -- rm -rf /mypv/test/
